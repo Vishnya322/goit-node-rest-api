@@ -2,10 +2,8 @@ import * as fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 
-// const contactsPath = new URL("./contacts.json", import.meta.url);
 const contactsPath = path.resolve("db", "contacts.json");
 
-// Функція для отримання списку контактів
 async function listContacts() {
   try {
     const data = await fs.readFile(contactsPath, { encoding: "utf-8" });
@@ -16,16 +14,6 @@ async function listContacts() {
   }
 }
 
-// Функція для отримання контакту за ідентифікатором
-// async function getContactById(contactId) {
-//   try {
-//     const contacts = await listContacts();
-//     const contact = contacts.find((c) => c.id === contactId);
-//     return contact || null;
-//   } catch (err) {
-//     throw err;
-//   }
-// }
 async function getContactById(contactId) {
   try {
     const contacts = await listContacts();
@@ -42,7 +30,6 @@ async function getContactById(contactId) {
   }
 }
 
-// Функція для видалення контакту за ідентифікатором
 async function removeContact(contactId) {
   try {
     const contacts = await listContacts();
@@ -59,7 +46,6 @@ async function removeContact(contactId) {
   }
 }
 
-// Функція для додавання нового контакту
 async function addContact(name, email, phone) {
   try {
     const contacts = await listContacts();
@@ -74,12 +60,32 @@ async function addContact(name, email, phone) {
   }
 }
 
-// Експорт об'єкта, що містить всі функції контактів
+async function updateContact(id, newData) {
+  try {
+    const contacts = await listContacts();
+    const index = contacts.findIndex((c) => c.id === id);
+    if (index === -1) {
+      return null;
+    }
+
+    const updatedContact = { ...contacts[index], ...newData };
+
+    contacts[index] = updatedContact;
+
+    await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
+
+    return updatedContact;
+  } catch (err) {
+    throw err;
+  }
+}
+
 const contactsServices = {
   listContacts,
   getContactById,
   removeContact,
   addContact,
+  updateContact,
 };
 
 export default contactsServices;

@@ -1,6 +1,5 @@
 import contactsServices from "../services/contactsServices.js";
-import { createContactSchema } from "../schemas/contactsSchemas.js";
-import validateBody from "../helpers/validateBody.js";
+import HttpError from "../helpers/HttpError.js";
 
 export const getAllContacts = async (req, res, next) => {
   try {
@@ -16,8 +15,10 @@ export const getOneContact = async (req, res, next) => {
     const { id } = req.params;
     const result = await contactsServices.getContactById(id);
 
-    if (!result) throw HttpError(404);
-    res.status(200).send(result);
+    if (!result) {
+      throw HttpError(404);
+    }
+    res.status(200).json(result);
   } catch (error) {
     next(error);
   }
@@ -39,44 +40,25 @@ export const deleteContact = async (req, res, next) => {
 
 export const createContact = async (req, res, next) => {
   try {
-    // Додайте middleware для валідації тіла запиту перед додаванням контакту
-    const middleware = validateBody(createContactSchema);
-
-    // Виклик middleware для валідації тіла запиту
-    middleware(req, res, async (error) => {
-      try {
-        if (error) {
-          return res.status(error.status).json({ message: error.message });
-        }
-
-        // Якщо дані пройшли валідацію, додайте контакт
-        const { name, email, phone } = req.body;
-        const contact = await contactsServices.addContact(name, email, phone);
-
-        // Відправте відповідь з новоствореним контактом і статусом 201 (Created)
-        res.status(201).json(contact);
-      } catch (error) {
-        next(error); // Передайте помилку до обробника помилок Express
-      }
-    });
+    const { name, email, phone } = req.body;
+    const contact = await contactsServices.addContact(name, email, phone);
+    res.status(201).json(contact);
   } catch (error) {
-    next(error); // Обробляйте інші помилки, якщо вони виникають у спробі створення контакту
+    next(error);
   }
 };
-
 export const updateContact = async (req, res, next) => {
   try {
-    if (Object.keys(req.body).length === 0)
-      throw HttpError(400, "Body must have at least one field");
-
     const { id } = req.params;
     const contact = await contactsServices.updateContact(id, req.body);
 
-    if (!contact) throw HttpError(404);
+    if (!contact) {
+      throw HttpError(404, "Contact not found");
+    }
 
-    res.json(contact);
+    res.status(200).json(contact);
   } catch (error) {
-    next(error.status ? error : {});
+    next(error);
   }
 };
 export default {
