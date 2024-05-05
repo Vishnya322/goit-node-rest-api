@@ -3,6 +3,7 @@ import morgan from "morgan";
 import cors from "cors";
 
 import contactsRouter from "./routes/contactsRouter.js";
+import { createContactSchema } from "./schemas/contactsSchemas.js";
 
 const app = express();
 
