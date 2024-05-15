@@ -21,10 +21,9 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
   },
-  {
-    versionKey: false,
-    timestamps: true,
-  }
+  { versionKey: false }
 );
 
-export default mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
+
+export default User;
