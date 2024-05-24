@@ -1,21 +1,15 @@
-import { contactIdSchema } from "../schemas/contactsSchemas.js";
+import HttpError from "./HttpError.js";
 
 const validateBody = (schema) => {
-  const func = (req, res, next) => {
-    const { contactId } = req.params;
-    const { error: idError } = contactIdSchema.validate(contactId);
-    if (idError) {
-      return res.status(400).send(idError.message);
-    }
-
+  const func = (req, _, next) => {
     const { error } = schema.validate(req.body);
     if (error) {
-      return res.status(400).send(error.message);
+      next(HttpError(400, error.message));
     }
-
     next();
   };
 
   return func;
 };
+
 export default validateBody;
