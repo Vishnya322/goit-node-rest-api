@@ -41,50 +41,6 @@ export const registerUser = async (req, res, next) => {
   }
 };
 
-// export const loginUser = async (req, res, next) => {
-//   const { error } = registerUserSchema.validate(req.body);
-//   if (error) {
-//     return res.status(400).send({ message: error.message });
-//   }
-//   try {
-//     const existUser = await User.findOne({ email: req.body.email });
-//     if (existUser === null) {
-//       console.log("Email is wrong");
-
-//       return res.status(401).send({ message: "Email or password is wrong" });
-//     }
-
-//     const isMatch = await bcrypt.compare(req.body.password, existUser.password);
-//     if (isMatch === false) {
-//       console.log("Password is wrong");
-
-//       return res.status(401).send({ message: "Email or password is wrong" });
-//     }
-
-//     const payload = {
-//       id: existUser.id,
-//     };
-
-//     const secret = process.env.SECRET;
-
-//     const token = jwt.sign(payload, secret, { expiresIn: "23h" });
-
-//     existUser.token = token;
-//     await existUser.save();
-
-//     res.status(200).send({
-//       token: token,
-//       user: {
-//         email: req.body.email,
-//         subscription: "starter",
-//       },
-//     });
-
-//     next();
-//   } catch (error) {
-//     next(error);
-//   }
-// };
 
 export const loginUser = async (req, res, next) => {
   const { error } = registerUserSchema.validate(req.body);
@@ -92,14 +48,14 @@ export const loginUser = async (req, res, next) => {
     return res.status(400).send({ message: error.message });
   }
   try {
-    const { email, password } = req.body; // Додаємо деструктуризацію email та password з req.body
+    const { email, password } = req.body;
     const existUser = await User.findOne({ email });
     if (existUser === null) {
       console.log("Email is wrong");
       return res.status(401).send({ message: "Email or password is wrong" });
     }
 
-    const isMatch = await bcrypt.compare(password, existUser.password); // Використовуємо password замість req.body.password
+    const isMatch = await bcrypt.compare(password, existUser.password); 
     if (isMatch === false) {
       console.log("Password is wrong");
       return res.status(401).send({ message: "Email or password is wrong" });
@@ -109,14 +65,13 @@ export const loginUser = async (req, res, next) => {
       id: existUser.id,
     };
 
-    const secret = process.env.SECRET || "default_secret"; // Додаємо перевірку наявності секрету
-
+    const secret = process.env.SECRET || "default_secret"; 
     const token = jwt.sign(payload, secret, { expiresIn: "23h" });
 
     existUser.token = token;
     await existUser.save();
 
-    console.log("Sending response with token and user details"); // Додаємо лог перед відправкою відповіді
+    console.log("Sending response with token and user details"); 
 
     res.status(200).json({
       token: token,
@@ -134,7 +89,7 @@ export const loginUser = async (req, res, next) => {
 
 export const logoutUser = async (req, res, next) => {
   try {
-    const userId = req.user._id; // use "id" if middleware authToken
+    const userId = req.user._id; 
 
     const user = await User.findById(userId);
 
