@@ -1,7 +1,9 @@
+import { loginUserSchema } from "../schemas/usersSchemas.js";
 import { registerUserSchema } from "../schemas/usersSchemas.js";
 import User from "../models/user.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import gravatar from "gravatar";
 
 export const registerUser = async (req, res, next) => {
   const { error } = registerUserSchema.validate(req.body);
@@ -10,22 +12,27 @@ export const registerUser = async (req, res, next) => {
   }
 
   try {
-    const existUser = await User.findOne({ email: req.body.email });
+    const { email, password } = req.body;
+
+    const existUser = await User.findOne({ email });
 
     if (existUser !== null) {
       return res.status(409).send({ message: "Email in use" });
     }
 
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const avatar = gravatar.url(email, { s: "250", d: "retro" }, true);
 
     await User.create({
-      email: req.body.email,
+      email,
       password: hashedPassword,
+      avatarURL: avatar,
     });
 
     res.status(201).send({
       user: {
-        email: req.body.email,
+        email,
         subscription: "starter",
       },
     });
@@ -34,23 +41,67 @@ export const registerUser = async (req, res, next) => {
   }
 };
 
+// export const loginUser = async (req, res, next) => {
+//   const { error } = registerUserSchema.validate(req.body);
+//   if (error) {
+//     return res.status(400).send({ message: error.message });
+//   }
+//   try {
+//     const existUser = await User.findOne({ email: req.body.email });
+//     if (existUser === null) {
+//       console.log("Email is wrong");
+
+//       return res.status(401).send({ message: "Email or password is wrong" });
+//     }
+
+//     const isMatch = await bcrypt.compare(req.body.password, existUser.password);
+//     if (isMatch === false) {
+//       console.log("Password is wrong");
+
+//       return res.status(401).send({ message: "Email or password is wrong" });
+//     }
+
+//     const payload = {
+//       id: existUser.id,
+//     };
+
+//     const secret = process.env.SECRET;
+
+//     const token = jwt.sign(payload, secret, { expiresIn: "23h" });
+
+//     existUser.token = token;
+//     await existUser.save();
+
+//     res.status(200).send({
+//       token: token,
+//       user: {
+//         email: req.body.email,
+//         subscription: "starter",
+//       },
+//     });
+
+//     next();
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
 export const loginUser = async (req, res, next) => {
   const { error } = registerUserSchema.validate(req.body);
   if (error) {
     return res.status(400).send({ message: error.message });
   }
   try {
-    const existUser = await User.findOne({ email: req.body.email });
+    const { email, password } = req.body; // Додаємо деструктуризацію email та password з req.body
+    const existUser = await User.findOne({ email });
     if (existUser === null) {
       console.log("Email is wrong");
-
       return res.status(401).send({ message: "Email or password is wrong" });
     }
 
-    const isMatch = await bcrypt.compare(req.body.password, existUser.password);
+    const isMatch = await bcrypt.compare(password, existUser.password); // Використовуємо password замість req.body.password
     if (isMatch === false) {
       console.log("Password is wrong");
-
       return res.status(401).send({ message: "Email or password is wrong" });
     }
 
@@ -58,17 +109,19 @@ export const loginUser = async (req, res, next) => {
       id: existUser.id,
     };
 
-    const secret = process.env.SECRET;
+    const secret = process.env.SECRET || "default_secret"; // Додаємо перевірку наявності секрету
 
     const token = jwt.sign(payload, secret, { expiresIn: "23h" });
 
     existUser.token = token;
     await existUser.save();
 
-    res.status(200).send({
+    console.log("Sending response with token and user details"); // Додаємо лог перед відправкою відповіді
+
+    res.status(200).json({
       token: token,
       user: {
-        email: req.body.email,
+        email: email,
         subscription: "starter",
       },
     });
