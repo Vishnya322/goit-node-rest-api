@@ -20,11 +20,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    avatarURL: {
+      type: String,
+      default: null,
+    },
   },
-  {
-    versionKey: false,
-    timestamps: true,
-  }
+  { versionKey: false }
 );
 
-export default mongoose.model("User", userSchema);
+const User = mongoose.models.User || mongoose.model("User", userSchema);
+export default User;
