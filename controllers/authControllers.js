@@ -4,6 +4,8 @@ import User from "../models/user.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import gravatar from "gravatar";
+import crypto from "node:crypto";
+import sendVerificationEmail from "../mail.js";
 
 export const registerUser = async (req, res, next) => {
   const { error } = registerUserSchema.validate(req.body);
@@ -24,11 +26,16 @@ export const registerUser = async (req, res, next) => {
 
     const avatar = gravatar.url(email, { s: "250", d: "retro" }, true);
 
+    const verificationToken = crypto.randomUUID();
+
     await User.create({
       email,
       password: hashedPassword,
       avatarURL: avatar,
+      verificationToken,
     });
+
+    await sendVerificationEmail(email, verificationToken);
 
     res.status(201).send({
       user: {
@@ -40,7 +47,6 @@ export const registerUser = async (req, res, next) => {
     next(error);
   }
 };
-
 
 export const loginUser = async (req, res, next) => {
   const { error } = registerUserSchema.validate(req.body);
@@ -55,23 +61,28 @@ export const loginUser = async (req, res, next) => {
       return res.status(401).send({ message: "Email or password is wrong" });
     }
 
-    const isMatch = await bcrypt.compare(password, existUser.password); 
+    const isMatch = await bcrypt.compare(password, existUser.password);
     if (isMatch === false) {
       console.log("Password is wrong");
       return res.status(401).send({ message: "Email or password is wrong" });
+    }
+    if (existUser.verify === false) {
+      return res
+        .status(401)
+        .send({ message: "Please verify your email before login" });
     }
 
     const payload = {
       id: existUser.id,
     };
 
-    const secret = process.env.SECRET || "default_secret"; 
+    const secret = process.env.SECRET || "default_secret";
     const token = jwt.sign(payload, secret, { expiresIn: "23h" });
 
     existUser.token = token;
     await existUser.save();
 
-    console.log("Sending response with token and user details"); 
+    console.log("Sending response with token and user details");
 
     res.status(200).json({
       token: token,
@@ -89,7 +100,7 @@ export const loginUser = async (req, res, next) => {
 
 export const logoutUser = async (req, res, next) => {
   try {
-    const userId = req.user._id; 
+    const userId = req.user._id;
 
     const user = await User.findById(userId);
 

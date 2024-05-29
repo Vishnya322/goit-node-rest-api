@@ -1,5 +1,5 @@
 import express from "express";
-import UserController from "../controllers/userControllers.js";
+import UserController from "../controllers/userController.js";
 import uploadMiddleware from "../middleware/upload.js";
 import authToken from "../middleware/authToken.js";
 
@@ -12,5 +12,11 @@ router.patch(
   uploadMiddleware.single("avatar"),
   UserController.updateAvatar
 );
+
+// GET /users/ verify/ :verificationToken
+router.get("/verify/:verificationToken", UserController.verify);
+
+// POST /users/ verify/ :verificationToken
+router.post("/verify", UserController.resendVerificationEmail);
 
 export default router;

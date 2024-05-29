@@ -9,6 +9,31 @@ import authToken from "./middleware/authToken.js";
 import usersRoutes from "./routes/usersRouter.js";
 import "dotenv/config";
 import path from "path";
+import nodemailer from "nodemailer";
+
+const { MAILTRAP_USERNAME, MAILTRAP_PASSWORD } = process.env;
+console.log(MAILTRAP_USERNAME);
+console.log(MAILTRAP_USERNAME);
+
+const transport = nodemailer.createTransport({
+  host: "sandbox.smtp.mailtrap.io",
+  port: 2525,
+  type: "login",
+  auth: {
+    user: MAILTRAP_USERNAME,
+    pass: MAILTRAP_PASSWORD,
+  },
+});
+
+const message = {
+  to: "Vishnya322@gmail.com",
+  from: "Vishnya322@gmail.com",
+  subject: "Hello from Node.js",
+  html: `<h1 style="color: red"> Goit courses finishing</h1>`,
+  text: "Hello on Goit courses",
+};
+
+transport.sendMail(message).then(console.log).catch(console.error);
 
 const app = express();
 
@@ -21,7 +46,7 @@ app.use("/avatars", express.static(path.resolve("public/avatars")));
 app.use("/contacts", authTokenUsePassport, contactsRouter);
 app.use("/users", authRouter);
 
-app.use("/users", authToken, usersRoutes);
+app.use("/users", usersRoutes);
 
 app.use((_, res) => {
   res.status(404).json({ message: "Route not found" });
